@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hostel Event Manager</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <a href="contribute.html">
+  <button>💰 Contribute</button>
+</a>
+
+<p style="text-align:center; margin-top: 30px;">
+  <a href="login.html" style="font-size: 14px; color: gray;">Admin Login</a>
+</p>
+
+
+  <!-- LOGIN FORM -->
+  <div id="login-section" class="center-box">
+    <h2>🔐 Admin Login</h2>
+    <input type="password" id="admin-pass" placeholder="Enter admin password" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- DASHBOARD (Hidden Initially) -->
+  <div id="dashboard" style="display: none; padding: 20px;">
+    <header>
+      <h1>🏠 Hostel Event Manager 
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </h1>
+    </header>
+    <main>
+      <section class="event-list">
+        <h2>All Events</h2>
+        <div class="events-container" id="events-container"></div>
+        <button onclick="addEvent()">➕ Add Event</button>
+      </section>
+    </main>
+
+
+    
+
+
+  </div>
+
+  <!-- FULLSCREEN IMAGE VIEW -->
+  <div id="fullscreen-img-view" onclick="closeFullImage()">
+    <img id="full-img" src="" />
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 30px;
+      background: #f0f0f0;
+    }
+    h2 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      background: white;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #333;
+      color: white;
+    }
+    .backup-controls {
+      margin-top: 30px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      background: teal;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #totalAmount {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Paid Students Dashboard</h2>
+
+  <input type="text" id="searchInput" placeholder="Search by name or year" style="padding: 8px; width: 300px; margin-bottom: 20px;">
+  <h3 id="totalAmount">Total Collected: ₹0</h3>
+
+  <table id="students-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Year</th>
+        <th>Amount</th>
+        <th>Payment ID</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="backup-controls">
+    <button onclick="backupData()">Backup</button>
+    <button onclick="restoreData()">Restore</button>
+  </div>
+
+
+  <script>
+  // Redirect if not logged in
+  if (sessionStorage.getItem("authenticated") !== "true") {
+    window.location.href = "login.html";
+  }
+</script>
+
+
+  <script>
+    const tbody = document.querySelector("#students-table tbody");
+    const totalAmountEl = document.getElementById("totalAmount");
+    let records = [];
+
+    function renderTable(data) {
+      tbody.innerHTML = "";
+      let total = 0;
+
+      data.forEach(student => {
+        total += Number(student.amount);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${student.name}</td>
+          <td>${student.year}</td>
+          <td>₹${student.amount}</td>
+          <td>${student.paymentId || "-"}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      totalAmountEl.textContent = `Total Collected: ₹${total}`;
+    }
+
+    function loadPaidStudents() {
+      records = JSON.parse(localStorage.getItem("paidStudents")) || [];
+      renderTable(records);
+    }
+
+    function backupData() {
+      const data = localStorage.getItem("paidStudents");
+      if (!data) return alert("No data to backup");
+      const blob = new Blob([data], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "backup.json";
+      link.click();
+    }
+
+    function restoreData() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = event => {
+          try {
+            const restored = JSON.parse(event.target.result);
+            localStorage.setItem("paidStudents", JSON.stringify(restored));
+            loadPaidStudents();
+            alert("Restore successful!");
+          } catch {
+            alert("Invalid file.");
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    // Filter on live typing
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const query = this.value.toLowerCase();
+      const filtered = records.filter(
+        r =>
+          r.name.toLowerCase().includes(query) ||
+          r.year.toLowerCase().includes(query)
+      );
+      renderTable(filtered);
+    });
+
+    // Initial Load
+    loadPaidStudents();
+  </script>
+
+  
+</body>
+</html>

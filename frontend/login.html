@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    input[type="password"] {
+      padding: 10px;
+      width: 250px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background: teal;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <input type="password" id="adminPass" placeholder="Enter admin password" /><br />
+    <button onclick="checkLogin()">Login</button>
+    <div class="error" id="errorMsg"></div>
+  </div>
+
+  <script>
+    function checkLogin() {
+      const password = document.getElementById("adminPass").value;
+      const correctPassword = "admin123"; // change as needed
+
+      if (password === correctPassword) {
+        // Optionally store session access
+        sessionStorage.setItem("authenticated", "true");
+        window.location.href = "dashboard.html";
+      } else {
+        document.getElementById("errorMsg").innerText = "Incorrect password!";
+      }
+    }
+  </script>
+
+</body>
+</html>
