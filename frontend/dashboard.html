@@ -8,173 +8,103 @@
     body {
       font-family: sans-serif;
       padding: 30px;
-      background: #f0f0f0;
+      background: #eef2f3;
     }
-    h2 {
-      text-align: center;
+    .dashboard {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #bbb;
     }
     table {
       width: 100%;
-      background: white;
       border-collapse: collapse;
       margin-top: 20px;
     }
     th, td {
-      border: 1px solid #ddd;
       padding: 10px;
+      border: 1px solid #ddd;
       text-align: center;
     }
     th {
       background: #333;
       color: white;
     }
-    .backup-controls {
-      margin-top: 30px;
-      text-align: center;
+    .summary {
+      margin-top: 10px;
+      font-weight: bold;
     }
     button {
-      padding: 10px 20px;
-      margin: 10px;
-      background: teal;
+      background: crimson;
       color: white;
+      padding: 5px 10px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
-    #totalAmount {
-      font-size: 20px;
-      font-weight: bold;
-      margin-top: 20px;
+    h2 {
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h2>Paid Students Dashboard</h2>
-
-  <input type="text" id="searchInput" placeholder="Search by name or year" style="padding: 8px; width: 300px; margin-bottom: 20px;">
-  <h3 id="totalAmount">Total Collected: ₹0</h3>
-
-  <table id="students-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Year</th>
-        <th>Amount</th>
-        <th>Time</th>
-        <th>Payment ID</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <div class="backup-controls">
-    <button onclick="backupData()">Backup</button>
-    <button onclick="restoreData()">Restore</button>
+  <div class="dashboard">
+    <h2>Admin Dashboard - Contributions</h2>
+    <div class="summary" id="summary"></div>
+    <table id="contributions-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Year</th>
+          <th>Amount</th>
+          <th>Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be inserted here -->
+      </tbody>
+    </table>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
-
   <script>
-    // Your Firebase configuration (replace with yours)
-     const firebaseConfig = {
-    apiKey: "AIzaSyCDjlWnN_GtlSlAVFRS3IRrZBWKc3dU2S0",
-    authDomain: "student-contributions.firebaseapp.com",
-    projectId: "student-contributions",
-    storageBucket: "student-contributions.firebasestorage.app",
-    messagingSenderId: "970052520733",
-    appId: "1:970052520733:web:b9f22e381a81327e3aaff4",
-    measurementId: "G-3K1824PG91"
-  };
+    const tableBody = document.querySelector("#contributions-table tbody");
+    const summary = document.getElementById("summary");
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    function loadContributions() {
+      const data = JSON.parse(localStorage.getItem("paidStudents") || "[]");
 
-    const tbody = document.querySelector("#students-table tbody");
-    const totalAmountEl = document.getElementById("totalAmount");
-    const searchInput = document.getElementById("searchInput");
-
-    let studentsData = [];
-
-    function renderTable(data) {
-      tbody.innerHTML = "";
+      tableBody.innerHTML = "";
       let total = 0;
 
-      data.forEach(student => {
-        total += Number(student.amount);
+      data.forEach((student, index) => {
+        total += parseFloat(student.amount);
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${student.name}</td>
           <td>${student.year}</td>
           <td>₹${student.amount}</td>
-          <td>${student.time || "-"}</td>
-          <td>${student.paymentId || "-"}</td>
+          <td>${new Date(student.timestamp).toLocaleString()}</td>
+          <td><button onclick="deleteEntry(${index})">Delete</button></td>
         `;
-        tbody.appendChild(row);
+        tableBody.appendChild(row);
       });
 
-      totalAmountEl.textContent = `Total Collected: ₹${total}`;
+      summary.textContent = `Total Contributors: ${data.length} | Total Amount: ₹${total}`;
     }
 
-    function fetchStudentsFromFirebase() {
-      db.ref("paidStudents").once("value").then(snapshot => {
-        const data = snapshot.val();
-        studentsData = [];
-
-        for (const key in data) {
-          studentsData.push(data[key]);
-        }
-
-        renderTable(studentsData);
-      });
+    function deleteEntry(index) {
+      if (confirm("Are you sure you want to delete this entry?")) {
+        const data = JSON.parse(localStorage.getItem("paidStudents") || "[]");
+        data.splice(index, 1);
+        localStorage.setItem("paidStudents", JSON.stringify(data));
+        loadContributions();
+      }
     }
 
-    function backupData() {
-      const blob = new Blob([JSON.stringify(studentsData)], { type: "application/json" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "backup.json";
-      link.click();
-    }
-
-    function restoreData() {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "application/json";
-      input.onchange = e => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = event => {
-          try {
-            const restored = JSON.parse(event.target.result);
-            for (const item of restored) {
-              const key = "QR-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5);
-              db.ref("paidStudents/" + key).set(item);
-            }
-            alert("Restore complete. Reload to view updated data.");
-          } catch {
-            alert("Invalid file.");
-          }
-        };
-        reader.readAsText(file);
-      };
-      input.click();
-    }
-
-    searchInput.addEventListener("input", () => {
-      const query = searchInput.value.toLowerCase();
-      const filtered = studentsData.filter(
-        student =>
-          student.name.toLowerCase().includes(query) ||
-          student.year.toLowerCase().includes(query)
-      );
-      renderTable(filtered);
-    });
-
-    // Fetch data on load
-    fetchStudentsFromFirebase();
+    loadContributions();
   </script>
 </body>
 </html>
