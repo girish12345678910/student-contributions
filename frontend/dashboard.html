@@ -55,8 +55,6 @@
   <h3 id="totalAmount">Total Collected: ₹0</h3>
 
   <table id="students-table">
-    
-
     <thead>
       <tr>
         <th>Name</th>
@@ -74,18 +72,36 @@
     <button onclick="restoreData()">Restore</button>
   </div>
 
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
 
   <script>
-  // Redirect if not logged in
-  if (sessionStorage.getItem("authenticated") !== "true") {
-    window.location.href = "login.html";
-  }
-</script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDjlWnN_GtlSlAVFRS3IRrZBWKc3dU2S0",
+      authDomain: "student-contributions.firebaseapp.com",
+      databaseURL: "https://student-contributions-default-rtdb.firebaseio.com",
+      projectId: "student-contributions",
+      storageBucket: "student-contributions.appspot.com",
+      messagingSenderId: "970052520733",
+      appId: "1:970052520733:web:b9f22e381a81327e3aaff4",
+      measurementId: "G-3K1824PG91"
+    };
 
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
 
   <script>
+    // Redirect if not logged in
+    if (sessionStorage.getItem("authenticated") !== "true") {
+      window.location.href = "login.html";
+    }
+
     const tbody = document.querySelector("#students-table tbody");
     const totalAmountEl = document.getElementById("totalAmount");
+    const searchInput = document.getElementById("searchInput");
     let records = [];
 
     function renderTable(data) {
@@ -99,8 +115,7 @@
           <td>${student.name}</td>
           <td>${student.year}</td>
           <td>₹${student.amount}</td>
-          <td>${student.time}</td>
-
+          <td>${student.timestamp || student.time || "-"}</td>
           <td>${student.paymentId || "-"}</td>
         `;
         tbody.appendChild(row);
@@ -109,15 +124,29 @@
       totalAmountEl.textContent = `Total Collected: ₹${total}`;
     }
 
-    function loadPaidStudents() {
-      records = JSON.parse(localStorage.getItem("paidStudents")) || [];
-      renderTable(records);
+    // Live Filter
+    searchInput.addEventListener("input", function () {
+      const query = this.value.toLowerCase();
+      const filtered = records.filter(
+        r =>
+          r.name.toLowerCase().includes(query) ||
+          r.year.toLowerCase().includes(query)
+      );
+      renderTable(filtered);
+    });
+
+    // Load Data from Firebase
+    function loadFirebaseData() {
+      db.ref("paidStudents").on("value", (snapshot) => {
+        const data = snapshot.val();
+        records = data ? Object.values(data) : [];
+        renderTable(records);
+      });
     }
 
     function backupData() {
-      const data = localStorage.getItem("paidStudents");
-      if (!data) return alert("No data to backup");
-      const blob = new Blob([data], { type: "application/json" });
+      if (!records.length) return alert("No data to backup");
+      const blob = new Blob([JSON.stringify(records)], { type: "application/json" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "backup.json";
@@ -134,8 +163,10 @@
         reader.onload = event => {
           try {
             const restored = JSON.parse(event.target.result);
-            localStorage.setItem("paidStudents", JSON.stringify(restored));
-            loadPaidStudents();
+            restored.forEach((record, i) => {
+              const id = Date.now() + "_" + i;
+              db.ref("paidStudents/" + id).set(record);
+            });
             alert("Restore successful!");
           } catch {
             alert("Invalid file.");
@@ -146,21 +177,7 @@
       input.click();
     }
 
-    // Filter on live typing
-    document.getElementById("searchInput").addEventListener("input", function () {
-      const query = this.value.toLowerCase();
-      const filtered = records.filter(
-        r =>
-          r.name.toLowerCase().includes(query) ||
-          r.year.toLowerCase().includes(query)
-      );
-      renderTable(filtered);
-    });
-
-    // Initial Load
-    loadPaidStudents();
+    loadFirebaseData();
   </script>
-
-  
 </body>
 </html>
