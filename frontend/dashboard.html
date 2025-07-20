@@ -55,11 +55,14 @@
   <h3 id="totalAmount">Total Collected: ₹0</h3>
 
   <table id="students-table">
+    
+
     <thead>
       <tr>
         <th>Name</th>
         <th>Year</th>
         <th>Amount</th>
+        <th>Time</th>
         <th>Payment ID</th>
       </tr>
     </thead>
@@ -96,6 +99,8 @@
           <td>${student.name}</td>
           <td>${student.year}</td>
           <td>₹${student.amount}</td>
+          <td>${student.time}</td>
+
           <td>${student.paymentId || "-"}</td>
         `;
         tbody.appendChild(row);

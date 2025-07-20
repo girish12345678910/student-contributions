@@ -17,6 +17,7 @@ document.getElementById("payment-form").addEventListener("submit", function (e) 
     year,
     amount,
     paymentId: "Manual via QR"
+    
   });
 
   localStorage.setItem("paidStudents", JSON.stringify(paidStudents));
@@ -24,3 +25,29 @@ document.getElementById("payment-form").addEventListener("submit", function (e) 
 
   document.getElementById("payment-form").reset();
 });
+
+function loadPaidStudents() {
+  const tbody = document.querySelector("#students-table tbody");
+  tbody.innerHTML = "";
+
+  firebase.database().ref("paidStudents").once("value", snapshot => {
+    let total = 0;
+    snapshot.forEach(child => {
+      const student = child.val();
+      total += Number(student.amount);
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${student.name}</td>
+        <td>${student.year}</td>
+        <td>₹${student.amount}</td>
+        <td>${student.paymentId}</td>
+        <td>${student.timestamp || '-'}</td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    document.getElementById("totalAmount").innerText = `Total Collected: ₹${total}`;
+  });
+}
+
