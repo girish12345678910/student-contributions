@@ -72,37 +72,31 @@
     <button onclick="restoreData()">Restore</button>
   </div>
 
-  <!-- Firebase Scripts -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
 
   <script>
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyCDjlWnN_GtlSlAVFRS3IRrZBWKc3dU2S0",
-      authDomain: "student-contributions.firebaseapp.com",
-      databaseURL: "https://student-contributions-default-rtdb.firebaseio.com",
-      projectId: "student-contributions",
-      storageBucket: "student-contributions.appspot.com",
-      messagingSenderId: "970052520733",
-      appId: "1:970052520733:web:b9f22e381a81327e3aaff4",
-      measurementId: "G-3K1824PG91"
-    };
+    // Your Firebase configuration (replace with yours)
+     const firebaseConfig = {
+    apiKey: "AIzaSyCDjlWnN_GtlSlAVFRS3IRrZBWKc3dU2S0",
+    authDomain: "student-contributions.firebaseapp.com",
+    projectId: "student-contributions",
+    storageBucket: "student-contributions.firebasestorage.app",
+    messagingSenderId: "970052520733",
+    appId: "1:970052520733:web:b9f22e381a81327e3aaff4",
+    measurementId: "G-3K1824PG91"
+  };
 
+    // Initialize Firebase
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-  </script>
-
-  <script>
-    // Redirect if not logged in
-    if (sessionStorage.getItem("authenticated") !== "true") {
-      window.location.href = "login.html";
-    }
 
     const tbody = document.querySelector("#students-table tbody");
     const totalAmountEl = document.getElementById("totalAmount");
     const searchInput = document.getElementById("searchInput");
-    let records = [];
+
+    let studentsData = [];
 
     function renderTable(data) {
       tbody.innerHTML = "";
@@ -115,7 +109,7 @@
           <td>${student.name}</td>
           <td>${student.year}</td>
           <td>₹${student.amount}</td>
-          <td>${student.timestamp || student.time || "-"}</td>
+          <td>${student.time || "-"}</td>
           <td>${student.paymentId || "-"}</td>
         `;
         tbody.appendChild(row);
@@ -124,29 +118,21 @@
       totalAmountEl.textContent = `Total Collected: ₹${total}`;
     }
 
-    // Live Filter
-    searchInput.addEventListener("input", function () {
-      const query = this.value.toLowerCase();
-      const filtered = records.filter(
-        r =>
-          r.name.toLowerCase().includes(query) ||
-          r.year.toLowerCase().includes(query)
-      );
-      renderTable(filtered);
-    });
-
-    // Load Data from Firebase
-    function loadFirebaseData() {
-      db.ref("paidStudents").on("value", (snapshot) => {
+    function fetchStudentsFromFirebase() {
+      db.ref("paidStudents").once("value").then(snapshot => {
         const data = snapshot.val();
-        records = data ? Object.values(data) : [];
-        renderTable(records);
+        studentsData = [];
+
+        for (const key in data) {
+          studentsData.push(data[key]);
+        }
+
+        renderTable(studentsData);
       });
     }
 
     function backupData() {
-      if (!records.length) return alert("No data to backup");
-      const blob = new Blob([JSON.stringify(records)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(studentsData)], { type: "application/json" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "backup.json";
@@ -163,11 +149,11 @@
         reader.onload = event => {
           try {
             const restored = JSON.parse(event.target.result);
-            restored.forEach((record, i) => {
-              const id = Date.now() + "_" + i;
-              db.ref("paidStudents/" + id).set(record);
-            });
-            alert("Restore successful!");
+            for (const item of restored) {
+              const key = "QR-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5);
+              db.ref("paidStudents/" + key).set(item);
+            }
+            alert("Restore complete. Reload to view updated data.");
           } catch {
             alert("Invalid file.");
           }
@@ -177,7 +163,18 @@
       input.click();
     }
 
-    loadFirebaseData();
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.toLowerCase();
+      const filtered = studentsData.filter(
+        student =>
+          student.name.toLowerCase().includes(query) ||
+          student.year.toLowerCase().includes(query)
+      );
+      renderTable(filtered);
+    });
+
+    // Fetch data on load
+    fetchStudentsFromFirebase();
   </script>
 </body>
 </html>
