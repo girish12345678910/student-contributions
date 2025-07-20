@@ -6,34 +6,34 @@
   <title>Contribute</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       padding: 30px;
       background: #f4f4f4;
     }
     .form-container {
       background: white;
-      padding: 20px;
+      padding: 25px;
       max-width: 400px;
       margin: auto;
-      box-shadow: 0 0 10px #ccc;
-      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 12px;
     }
     input {
       display: block;
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin-bottom: 15px;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 6px;
     }
     button {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       background: green;
       color: white;
       font-weight: bold;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
     }
     .qr {
@@ -63,16 +63,30 @@
     </div>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+
+  <!-- Firebase Config -->
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDjlWnN_GtlSlAVFRS3IRrZBWKc3dU2S0",
+      authDomain: "student-contributions.firebaseapp.com",
+      databaseURL: "https://student-contributions-default-rtdb.firebaseio.com",
+      projectId: "student-contributions",
+      storageBucket: "student-contributions.appspot.com",
+      messagingSenderId: "970052520733",
+      appId: "1:970052520733:web:b9f22e381a81327e3aaff4",
+      measurementId: "G-3K1824PG91"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     function confirmPayment(event) {
       event.preventDefault();
-
       const confirmed = confirm("Have you scanned the QR code and completed the payment?");
-      if (confirmed) {
-        handlePayment();
-      } else {
-        alert("Please scan the QR code and complete payment before submitting.");
-      }
+      if (confirmed) handlePayment();
     }
 
     function handlePayment() {
@@ -93,13 +107,15 @@
         paymentId: "QR-" + Date.now()
       };
 
-      // Save to localStorage
-      const data = JSON.parse(localStorage.getItem("paidStudents") || "[]");
-      data.push(student);
-      localStorage.setItem("paidStudents", JSON.stringify(data));
-
-      alert("Payment recorded successfully!");
-      document.getElementById("payment-form").reset();
+      db.ref("paidStudents").push(student)
+        .then(() => {
+          alert("Payment recorded successfully!");
+          document.getElementById("payment-form").reset();
+        })
+        .catch((error) => {
+          console.error("Firebase write error:", error);
+          alert("Something went wrong! Please try again.");
+        });
     }
   </script>
 </body>

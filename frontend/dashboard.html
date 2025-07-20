@@ -1,110 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Dashboard</title>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 30px;
-      background: #eef2f3;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1f5f9;
+      padding: 40px;
     }
     .dashboard {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #bbb;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      padding: 25px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 15px;
     }
     th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      text-align: center;
+      padding: 12px 15px;
+      text-align: left;
     }
     th {
-      background: #333;
+      background-color: #4CAF50;
       color: white;
     }
-    .summary {
-      margin-top: 10px;
-      font-weight: bold;
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
     }
-    button {
-      background: crimson;
-      color: white;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    h2 {
-      text-align: center;
+    tr:hover {
+      background-color: #f1f1f1;
     }
   </style>
 </head>
 <body>
+
   <div class="dashboard">
-    <h2>Admin Dashboard - Contributions</h2>
-    <div class="summary" id="summary"></div>
-    <table id="contributions-table">
+    <h2>Student Contributions</h2>
+    <table>
       <thead>
         <tr>
           <th>Name</th>
           <th>Year</th>
           <th>Amount</th>
-          <th>Time</th>
-          <th>Action</th>
+          <th>Payment ID</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Rows will be inserted here -->
+      <tbody id="table-body">
+        <!-- Data rows will be inserted here -->
       </tbody>
     </table>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+
+  <!-- Firebase Config -->
   <script>
-    const tableBody = document.querySelector("#contributions-table tbody");
-    const summary = document.getElementById("summary");
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDjlWnN_GtlSlAVFRS3IRrZBWKc3dU2S0",
+      authDomain: "student-contributions.firebaseapp.com",
+      databaseURL: "https://student-contributions-default-rtdb.firebaseio.com",
+      projectId: "student-contributions",
+      storageBucket: "student-contributions.appspot.com",
+      messagingSenderId: "970052520733",
+      appId: "1:970052520733:web:b9f22e381a81327e3aaff4",
+      measurementId: "G-3K1824PG91"
+    };
 
-    function loadContributions() {
-      const data = JSON.parse(localStorage.getItem("paidStudents") || "[]");
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-      tableBody.innerHTML = "";
-      let total = 0;
+    function loadDashboardData() {
+      const tbody = document.getElementById("table-body");
+      tbody.innerHTML = "";
 
-      data.forEach((student, index) => {
-        total += parseFloat(student.amount);
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${student.name}</td>
-          <td>${student.year}</td>
-          <td>₹${student.amount}</td>
-          <td>${new Date(student.timestamp).toLocaleString()}</td>
-          <td><button onclick="deleteEntry(${index})">Delete</button></td>
-        `;
-        tableBody.appendChild(row);
+      db.ref("paidStudents").once("value").then(snapshot => {
+        snapshot.forEach(child => {
+          const s = child.val();
+          const row = `
+            <tr>
+              <td>${s.name}</td>
+              <td>${s.year}</td>
+              <td>₹${s.amount}</td>
+              <td>${s.paymentId}</td>
+            </tr>
+          `;
+          tbody.innerHTML += row;
+        });
       });
-
-      summary.textContent = `Total Contributors: ${data.length} | Total Amount: ₹${total}`;
     }
 
-    function deleteEntry(index) {
-      if (confirm("Are you sure you want to delete this entry?")) {
-        const data = JSON.parse(localStorage.getItem("paidStudents") || "[]");
-        data.splice(index, 1);
-        localStorage.setItem("paidStudents", JSON.stringify(data));
-        loadContributions();
-      }
-    }
-
-    loadContributions();
+    window.onload = loadDashboardData;
   </script>
+
 </body>
 </html>
