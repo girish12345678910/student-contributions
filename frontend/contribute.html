@@ -50,7 +50,7 @@
 <body>
   <div class="form-container">
     <h2>Pay via QR & Mark as Paid</h2>
-    <form id="payment-form" onsubmit="submitPayment(event)">
+    <form id="payment-form" onsubmit="confirmPayment(event)">
       <input type="text" id="student-name" placeholder="Student Name" required />
       <input type="text" id="student-year" placeholder="Year" required />
       <input type="number" id="amount" placeholder="Amount Paid" required />
@@ -63,51 +63,43 @@
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
-
-  <!-- Firebase Config -->
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCDjlWnN_GtlSlAVFRS3IRrZBWKc3dU2S0",
-      authDomain: "student-contributions.firebaseapp.com",
-      databaseURL: "https://student-contributions-default-rtdb.firebaseio.com",
-      projectId: "student-contributions",
-      storageBucket: "student-contributions.appspot.com",
-      messagingSenderId: "970052520733",
-      appId: "1:970052520733:web:b9f22e381a81327e3aaff4",
-      measurementId: "G-3K1824PG91"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    function submitPayment(event) {
+    function confirmPayment(event) {
       event.preventDefault();
-      if (!confirm("Have you scanned the QR and completed payment?")) return;
 
+      const confirmed = confirm("Have you scanned the QR code and completed the payment?");
+      if (confirmed) {
+        handlePayment();
+      } else {
+        alert("Please scan the QR code and complete payment before submitting.");
+      }
+    }
+
+    function handlePayment() {
       const name = document.getElementById("student-name").value.trim();
       const year = document.getElementById("student-year").value.trim();
       const amount = document.getElementById("amount").value.trim();
 
-      const contribution = {
+      if (!name || !year || !amount) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      const student = {
         name,
         year,
         amount,
         timestamp: new Date().toISOString(),
-        id: "QR-" + Date.now()
+        paymentId: "QR-" + Date.now()
       };
 
-      db.ref("paidStudents").push(contribution)
-        .then(() => {
-          alert("Contribution submitted successfully!");
-          document.getElementById("payment-form").reset();
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          alert("Submission failed. Try again.");
-        });
+      // Save to localStorage
+      const data = JSON.parse(localStorage.getItem("paidStudents") || "[]");
+      data.push(student);
+      localStorage.setItem("paidStudents", JSON.stringify(data));
+
+      alert("Payment recorded successfully!");
+      document.getElementById("payment-form").reset();
     }
   </script>
 </body>
