@@ -106,70 +106,12 @@
 
     loadContributions();
   </script>
-
-
-
-<script>
-    const form = document.getElementById('payment-form');
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      const data = {
-        name: document.getElementById('student-name').value,
-        year: document.getElementById('student-year').value,
-        amount: document.getElementById('amount').value
-      };
-
-      try {
-        await fetch("https://script.google.com/macros/s/AKfycbzVHYSmbNnzNfeCue7C96LUcTrDZ08elFYmwWbRLe7Lw5bw7_mFiU98rjoUlTK5jhui/exec", {
-          method: "POST",
-          body: JSON.stringify(data),
-          headers: { "Content-Type": "application/json" }
-        });
-        alert("Submitted successfully!");
-        form.reset();
-      } catch (error) {
-        console.error(error);
-        alert("Failed to submit. Try again.");
-      }
-    });
-  </script>
-
-  <script>
-    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzVHYSmbNnzNfeCue7C96LUcTrDZ08elFYmwWbRLe7Lw5bw7_mFiU98rjoUlTK5jhui/exec";
-
-    async function fetchData() {
-      try {
-        const response = await fetch(SHEET_API_URL);
-        const data = await response.json();
-        const tbody = document.getElementById("contribution-table-body");
-
-        if (!data.length) {
-          tbody.innerHTML = `<tr><td colspan="4">No data found</td></tr>`;
-          return;
-        }
-
-        tbody.innerHTML = ""; // Clear old data
-
-        data.forEach(entry => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${entry.Name || ''}</td>
-            <td>${entry.Year || ''}</td>
-            <td>${entry.Amount || ''}</td>
-            <td>${new Date(entry.Timestamp).toLocaleString() || ''}</td>
-          `;
-          tbody.appendChild(row);
-        });
-
-      } catch (err) {
-        console.error(err);
-        document.getElementById("contribution-table-body").innerHTML =
-          `<tr><td colspan="4">Error fetching data</td></tr>`;
-      }
-    }
-
-    fetchData(); // Run on page load
-  </script>
 </body>
 </html>
+
+
+
+
+
+
+
